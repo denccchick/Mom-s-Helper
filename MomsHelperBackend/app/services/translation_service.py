@@ -40,8 +40,8 @@ class TranslationService:
             logger.info("CTranslate2 model detected, loading directly...")
             self._load_ct2(model_path, device)
         elif available_ram < 3.0:
-            logger.warning(f"Low memory ({available_ram:.1f} GB), using 8-bit mode...")
-            self._load_transformers_8bit(model_path)
+            logger.warning(f"Low memory ({available_ram:.1f} GB), using float16 mode...")
+            self._load_transformers_float16(model_path)
         else:
             logger.info(f"Sufficient memory ({available_ram:.1f} GB), loading full model...")
             self._load_transformers_full(model_path)
@@ -63,29 +63,29 @@ class TranslationService:
         self._using_8bit = False
         logger.info("✅ CTranslate2 loaded (most memory efficient)")
 
-def _load_transformers_8bit(self, model_path):
-    """Load PyTorch model with float16 (reduced memory)"""
-    try:
-        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+    def _load_transformers_float16(self, model_path: Path):
+        """Load PyTorch model with float16 (reduced memory)"""
+        try:
+            from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-        logger.info(f"Loading tokenizer from {model_path}")
-        self.tokenizer = AutoTokenizer.from_pretrained(str(model_path))
+            logger.info(f"Loading tokenizer from {model_path}")
+            self._tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="eng_Latn")
 
-        logger.info("Loading model with float16...")
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(
-            str(model_path),
-            low_cpu_mem_usage=True,
-            torch_dtype=torch.float16,
-            device_map="auto"
-        )
-        self.using_8bit = False
-        self.using_ctranslate2 = False
-        logger.info("✅ Model loaded with float16!")
-        return True
+            logger.info("Loading model with float16...")
+            self._translator = AutoModelForSeq2SeqLM.from_pretrained(
+                str(model_path),
+                low_cpu_mem_usage=True,
+                torch_dtype=torch.float16,
+                device_map="auto"
+            )
+            self._using_ct2 = False
+            self._using_8bit = False
+            logger.info("✅ Model loaded with float16!")
+            return True
 
-    except Exception as e:
-        logger.error(f"Failed to load model with float16: {e}")
-        return False
+        except Exception as e:
+            logger.error(f"Failed to load model with float16: {e}")
+            return False
 
     def _load_transformers_full(self, model_path: Path):
         logger.info(f"Loading full transformers from {model_path}")
