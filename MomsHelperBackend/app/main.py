@@ -10,7 +10,7 @@ from app.services.translation_service import translation_service
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = Path("./models/nllb-600m-ct2")
+MODEL_PATH = Path("./translation_models/nllb-600m-ct2")
 
 
 @asynccontextmanager
