@@ -63,40 +63,29 @@ class TranslationService:
         self._using_8bit = False
         logger.info("✅ CTranslate2 loaded (most memory efficient)")
 
-    def _load_transformers_8bit(self, model_path: Path):
-        logger.info(f"Loading transformers 8-bit from {model_path}")
-        try:
-            from transformers import AutoModelForSeq2SeqLM
-            self._tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="eng_Latn")
+def _load_transformers_8bit(self, model_path):
+    """Load PyTorch model with float16 (reduced memory)"""
+    try:
+        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-            try:
-                model = AutoModelForSeq2SeqLM.from_pretrained(
-                    str(model_path),
-                    load_in_8bit=True,
-                    device_map="auto",
-                    low_cpu_mem_usage=True,
-                    torch_dtype=torch.float16
-                )
-                self._using_8bit = True
-                logger.info("✅ 8-bit model loaded")
-            except (ImportError, RuntimeError):
-                logger.warning("bitsandbytes not available, using float16")
-                model = AutoModelForSeq2SeqLM.from_pretrained(
-                    str(model_path),
-                    low_cpu_mem_usage=True,
-                    torch_dtype=torch.float16,
-                    device_map="auto"
-                )
-                self._using_8bit = False
-                logger.info("✅ float16 model loaded")
+        logger.info(f"Loading tokenizer from {model_path}")
+        self.tokenizer = AutoTokenizer.from_pretrained(str(model_path))
 
-            # CTranslate2 не используется, но translator нужен для совместимости API
-            self._translator = model
-            self._using_ct2 = False
+        logger.info("Loading model with float16...")
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(
+            str(model_path),
+            low_cpu_mem_usage=True,
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
+        self.using_8bit = False
+        self.using_ctranslate2 = False
+        logger.info("✅ Model loaded with float16!")
+        return True
 
-        except Exception as e:
-            logger.error(f"Failed to load transformers: {e}")
-            raise
+    except Exception as e:
+        logger.error(f"Failed to load model with float16: {e}")
+        return False
 
     def _load_transformers_full(self, model_path: Path):
         logger.info(f"Loading full transformers from {model_path}")
