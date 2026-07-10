@@ -1,0 +1,7 @@
+pyjwt
+bcrypt
+psutil
+fastapi
+pydantic
+python-dotenv
+pytest
