@@ -5,3 +5,9 @@ fastapi
 pydantic
 python-dotenv
 pytest
+uvicorn
+ctranslate2
+python-docx
+transformers
+pdf2docx
+docx2pdf
