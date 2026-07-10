@@ -75,7 +75,7 @@ Thumbs.db
 venv/
 
 # Model artifacts and large files
-models/
+translation_models/
 translated_texts/
 
 # VS Code workspace settings
