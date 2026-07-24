@@ -3,14 +3,14 @@ import {
   Upload,
   FileText,
   Download,
-  RefreshCw,
   X,
   File,
   Loader2,
   CheckCircle,
   AlertCircle,
   ArrowRight,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Scan
 } from 'lucide-react';
 import '../../styles/components/conversion/ConversionPage.css';
 
@@ -31,29 +31,25 @@ const ConversionPage = () => {
   };
 
   const getFileExtension = () => {
-    return direction === 'pdf-to-docx' ? '.pdf' : '.docx';
+    return direction.includes('pdf-to-docx') ? '.pdf' : '.docx';
   };
 
   const getAccept = () => {
-    return direction === 'pdf-to-docx' ? '.pdf' : '.docx';
+    return direction.includes('pdf-to-docx') ? '.pdf' : '.docx';
   };
 
   const getEndpoint = () => {
-    return direction === 'pdf-to-docx'
-      ? '/api/v1/conversion/pdf-to-docx'
-      : '/api/v1/conversion/docx-to-pdf';
+    if (direction === 'pdf-to-docx') return '/api/v1/conversion/pdf-to-docx';
+    if (direction === 'pdf-to-docx-ocr') return '/api/v1/conversion/pdf-to-docx-ocr';
+    return '/api/v1/conversion/docx-to-pdf';
   };
 
   const getOutputExtension = () => {
-    return direction === 'pdf-to-docx' ? '.docx' : '.pdf';
-  };
-
-  const getFileTypeLabel = () => {
-    return direction === 'pdf-to-docx' ? 'PDF' : 'DOCX';
+    return direction.includes('pdf-to-docx') ? '.docx' : '.pdf';
   };
 
   const getIcon = () => {
-    return direction === 'pdf-to-docx' ? <File size={24} /> : <FileText size={24} />;
+    return direction.includes('pdf-to-docx') ? <File size={24} /> : <FileText size={24} />;
   };
 
   const handleFileChange = (e) => {
@@ -89,7 +85,7 @@ const ConversionPage = () => {
     }
 
     setIsLoading(true);
-    setStatus('Конвертация...');
+    setStatus(direction === 'pdf-to-docx-ocr' ? 'Распознавание и конвертация...' : 'Конвертация...');
 
     const formData = new FormData();
     formData.append('file', selectedFile);
@@ -122,7 +118,8 @@ const ConversionPage = () => {
       const a = document.createElement('a');
       a.href = downloadUrl;
       const base = selectedFile.name.replace(/\.[^.]+$/, '');
-      a.download = `${base}_converted${getOutputExtension()}`;
+      const suffix = direction === 'pdf-to-docx-ocr' ? '_ocr' : '_converted';
+      a.download = `${base}${suffix}${getOutputExtension()}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -163,8 +160,8 @@ const ConversionPage = () => {
     return '';
   };
 
-  const fromLabel = direction === 'pdf-to-docx' ? 'PDF' : 'DOCX';
-  const toLabel = direction === 'pdf-to-docx' ? 'DOCX' : 'PDF';
+  const fromLabel = direction.includes('pdf-to-docx') ? 'PDF' : 'DOCX';
+  const toLabel = direction.includes('pdf-to-docx') ? 'DOCX' : 'PDF';
 
   return (
     <div className="conversion-container">
@@ -172,7 +169,7 @@ const ConversionPage = () => {
         <div className="header-section">
           <ArrowLeftRight size={32} className="header-icon" />
           <h1>Конвертер документов</h1>
-          <p>Конвертируйте между PDF и DOCX</p>
+          <p>Конвертируйте документы и распознавайте сканы</p>
         </div>
 
         {/* Бейджи направления */}
@@ -187,6 +184,18 @@ const ConversionPage = () => {
             <FileText size={18} />
             <span>DOCX</span>
           </button>
+
+          <button
+            className={`direction-badge ${direction === 'pdf-to-docx-ocr' ? 'active' : ''}`}
+            onClick={() => setDirectionMode('pdf-to-docx-ocr')}
+          >
+            <Scan size={18} />
+            <span>PDF (Скан)</span>
+            <ArrowRight size={14} className="badge-arrow" />
+            <FileText size={18} />
+            <span>DOCX</span>
+          </button>
+
           <button
             className={`direction-badge ${direction === 'docx-to-pdf' ? 'active' : ''}`}
             onClick={() => setDirectionMode('docx-to-pdf')}
@@ -247,7 +256,7 @@ const ConversionPage = () => {
               {isLoading ? (
                 <>
                   <Loader2 size={18} className="spinning" />
-                  <span>Конвертируем...</span>
+                  <span>{direction === 'pdf-to-docx-ocr' ? 'Распознаем...' : 'Конвертируем...'}</span>
                 </>
               ) : (
                 <>

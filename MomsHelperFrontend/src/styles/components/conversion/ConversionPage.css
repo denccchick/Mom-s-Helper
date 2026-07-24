@@ -37,10 +37,9 @@
   margin: 0;
 }
 
-/* Бейджи направления */
 .direction-badges {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-bottom: 24px;
 }
@@ -49,14 +48,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 12px 16px;
+  gap: 4px; /* Чуть уменьшили отступ между иконкой и текстом */
+  padding: 10px 8px; /* Уменьшили боковые отступы */
   border: 2px solid #e9ecef;
   border-radius: 12px;
   background: white;
   color: #6c757d;
   font-weight: 500;
-  font-size: 13px;
+  font-size: 12px; /* Чуть уменьшили шрифт */
   cursor: pointer;
   transition: all 0.3s ease;
 }
