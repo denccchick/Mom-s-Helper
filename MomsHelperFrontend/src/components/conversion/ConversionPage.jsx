@@ -6,8 +6,6 @@ import {
   X,
   File,
   Loader2,
-  CheckCircle,
-  AlertCircle,
   ArrowRight,
   ArrowLeftRight,
   Scan
@@ -17,7 +15,6 @@ import '../../styles/components/conversion/ConversionPage.css';
 const ConversionPage = () => {
   const [direction, setDirection] = useState('pdf-to-docx');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [status, setStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
 
@@ -25,7 +22,6 @@ const ConversionPage = () => {
     if (mode === direction) return;
     setDirection(mode);
     setSelectedFile(null);
-    setStatus('');
     setDownloadUrl(null);
     document.getElementById('fileInput').value = '';
   };
@@ -57,10 +53,9 @@ const ConversionPage = () => {
     const ext = getFileExtension();
     if (file && file.name.toLowerCase().endsWith(ext)) {
       setSelectedFile(file);
-      setStatus('');
       setDownloadUrl(null);
     } else if (file) {
-      setStatus(`Нужен файл ${ext.toUpperCase()}`);
+      alert(`Нужен файл ${ext.toUpperCase()}`);
       setSelectedFile(null);
     }
   };
@@ -71,21 +66,19 @@ const ConversionPage = () => {
     const ext = getFileExtension();
     if (file && file.name.toLowerCase().endsWith(ext)) {
       setSelectedFile(file);
-      setStatus('');
       setDownloadUrl(null);
     } else if (file) {
-      setStatus(`Нужен файл ${ext.toUpperCase()}`);
+      alert(`Нужен файл ${ext.toUpperCase()}`);
     }
   };
 
   const handleConvert = async () => {
     if (!selectedFile) {
-      setStatus('Выберите файл');
+      alert('Выберите файл');
       return;
     }
 
     setIsLoading(true);
-    setStatus(direction === 'pdf-to-docx-ocr' ? 'Распознавание и конвертация...' : 'Конвертация...');
 
     const formData = new FormData();
     formData.append('file', selectedFile);
@@ -105,9 +98,8 @@ const ConversionPage = () => {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-      setStatus('Готово! Нажмите кнопку для скачивания.');
     } catch (error) {
-      setStatus(`Ошибка: ${error.message}`);
+      alert(`Ошибка: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +122,6 @@ const ConversionPage = () => {
 
   const handleNew = () => {
     setSelectedFile(null);
-    setStatus('');
     setDownloadUrl(null);
     document.getElementById('fileInput').value = '';
   };
@@ -138,26 +129,7 @@ const ConversionPage = () => {
   const clearFile = (e) => {
     e.stopPropagation();
     setSelectedFile(null);
-    setStatus('');
     document.getElementById('fileInput').value = '';
-  };
-
-  const getStatusIcon = () => {
-    if (status.includes('Готово')) return <CheckCircle size={20} />;
-    if (status.includes('...') && status !== '') return <Loader2 size={20} className="spinning" />;
-    if (status.includes('Ошибка') || status.includes('Нужен') || status.includes('Выберите')) {
-      return <AlertCircle size={20} />;
-    }
-    return null;
-  };
-
-  const getStatusClass = () => {
-    if (status.includes('Готово')) return 'success';
-    if (status.includes('...') && status !== '') return 'info';
-    if (status.includes('Ошибка') || status.includes('Нужен') || status.includes('Выберите')) {
-      return 'error';
-    }
-    return '';
   };
 
   const fromLabel = direction.includes('pdf-to-docx') ? 'PDF' : 'DOCX';
@@ -172,7 +144,6 @@ const ConversionPage = () => {
           <p>Конвертируйте документы и распознавайте сканы</p>
         </div>
 
-        {/* Бейджи направления */}
         <div className="direction-badges">
           <button
             className={`direction-badge ${direction === 'pdf-to-docx' ? 'active' : ''}`}
@@ -239,13 +210,6 @@ const ConversionPage = () => {
           )}
         </div>
 
-        {status && (
-          <div className={`status ${getStatusClass()}`}>
-            {getStatusIcon()}
-            <span>{status}</span>
-          </div>
-        )}
-
         <div className="button-group">
           {!downloadUrl ? (
             <button
@@ -259,9 +223,7 @@ const ConversionPage = () => {
                   <span>{direction === 'pdf-to-docx-ocr' ? 'Распознаем...' : 'Конвертируем...'}</span>
                 </>
               ) : (
-                <>
-                  <span>Конвертировать</span>
-                </>
+                <span>Конвертировать</span>
               )}
             </button>
           ) : (

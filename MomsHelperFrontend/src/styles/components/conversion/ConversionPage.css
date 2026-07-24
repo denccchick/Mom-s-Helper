@@ -13,6 +13,7 @@
   padding: 40px;
   max-width: 600px;
   width: 100%;
+  min-height: 500px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
@@ -48,18 +49,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px; /* Чуть уменьшили отступ между иконкой и текстом */
-  padding: 10px 8px; /* Уменьшили боковые отступы */
+  gap: 4px;
+  padding: 10px 8px;
   border: 2px solid #e9ecef;
   border-radius: 12px;
   background: white;
   color: #6c757d;
   font-weight: 500;
-  font-size: 12px; /* Чуть уменьшили шрифт */
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
-
 
 .direction-badge.active {
   border-color: #667eea;
@@ -83,11 +83,15 @@
 .drop-zone {
   border: 2px dashed #ccc;
   border-radius: 12px;
-  padding: 40px;
+  height: 160px;
+  padding: 20px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .drop-zone:hover {
@@ -253,6 +257,7 @@
 @media (max-width: 480px) {
   .conversion-card {
     padding: 20px;
+    min-height: 400px;
   }
 
   .conversion-card h1 {
@@ -264,7 +269,8 @@
   }
 
   .drop-zone {
-    padding: 20px;
+    height: 140px;
+    padding: 15px;
   }
 
   .button-group {
