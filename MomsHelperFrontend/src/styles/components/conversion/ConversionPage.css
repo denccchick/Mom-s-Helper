@@ -208,7 +208,7 @@
 
 .primary-btn:hover:not(:disabled) {
   background: #5a67d8;
-  transform: translateY(-2px);
+  transform: none;
 }
 
 .primary-btn:disabled {
@@ -234,7 +234,7 @@
 
 .download-btn:hover {
   background: #218838;
-  transform: translateY(-2px);
+  transform: none;
 }
 
 @keyframes spin {
