@@ -14,7 +14,6 @@ import '../../styles/components/translation/TranslationPage.css';
 
 const TranslationPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [status, setStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
 
@@ -22,10 +21,9 @@ const TranslationPage = () => {
     const file = e.target.files[0];
     if (file && file.name.endsWith('.docx')) {
       setSelectedFile(file);
-      setStatus('');
       setDownloadUrl(null);
     } else if (file) {
-      setStatus('Выберите файл .docx');
+      alert('Выберите файл .docx');
       setSelectedFile(null);
     }
   };
@@ -35,20 +33,18 @@ const TranslationPage = () => {
     const file = e.dataTransfer.files[0];
     if (file && file.name.endsWith('.docx')) {
       setSelectedFile(file);
-      setStatus('');
       setDownloadUrl(null);
     } else if (file) {
-      setStatus('Нужен .docx');
+      alert('Нужен .docx');
     }
   };
 
   const handleTranslate = async () => {
     if (!selectedFile) {
-      setStatus('Выберите файл');
+      alert('Выберите файл');
       return;
     }
     setIsLoading(true);
-    setStatus('Перевод...');
     const formData = new FormData();
     formData.append('file', selectedFile);
     const backendUrl = window.location.origin.replace(':3000', ':8000');
@@ -64,9 +60,8 @@ const TranslationPage = () => {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-      setStatus('Перевод готов!');
     } catch (err) {
-      setStatus(`Ошибка: ${err.message}`);
+      alert(`Ошибка: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +82,6 @@ const TranslationPage = () => {
 
   const handleNew = () => {
     setSelectedFile(null);
-    setStatus('');
     setDownloadUrl(null);
     document.getElementById('fileInput').value = '';
   };
@@ -95,26 +89,7 @@ const TranslationPage = () => {
   const clearFile = (e) => {
     e.stopPropagation();
     setSelectedFile(null);
-    setStatus('');
     document.getElementById('fileInput').value = '';
-  };
-
-  const getStatusIcon = () => {
-    if (status.includes('готов')) return <CheckCircle size={20} />;
-    if (status.includes('...') && status !== '') return <Loader2 size={20} className="spinning" />;
-    if (status.includes('Ошибка') || status.includes('Выберите') || status.includes('Нужен')) {
-      return <AlertCircle size={20} />;
-    }
-    return null;
-  };
-
-  const getStatusClass = () => {
-    if (status.includes('готов')) return 'success';
-    if (status.includes('...') && status !== '') return 'info';
-    if (status.includes('Ошибка') || status.includes('Выберите') || status.includes('Нужен')) {
-      return 'error';
-    }
-    return '';
   };
 
   return (
@@ -157,13 +132,6 @@ const TranslationPage = () => {
           )}
         </div>
 
-        {status && (
-          <div className={`status ${getStatusClass()}`}>
-            {getStatusIcon()}
-            <span>{status}</span>
-          </div>
-        )}
-
         <div className="button-group">
           {!downloadUrl ? (
             <button
@@ -177,9 +145,7 @@ const TranslationPage = () => {
                   <span>Переводим...</span>
                 </>
               ) : (
-                <>
-                  <span>Перевести</span>
-                </>
+                <span>Перевести</span>
               )}
             </button>
           ) : (
