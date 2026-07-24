@@ -155,8 +155,7 @@ const TranslationPage = () => {
           )}
           {downloadUrl && (
             <button onClick={handleDownload} className="download-btn">
-              <Download size={18} />
-              <span>Скачать</span>
+              <span>Скачать DOCX</span>
             </button>
           )}
         </div>

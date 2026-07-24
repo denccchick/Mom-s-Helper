@@ -233,7 +233,6 @@ const ConversionPage = () => {
           )}
           {downloadUrl && (
             <button onClick={handleDownload} className="download-btn">
-              <Download size={18} />
               <span>Скачать {toLabel}</span>
             </button>
           )}
