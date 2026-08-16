@@ -13,6 +13,8 @@ def test_clean_text_removes_problematic_chars():
 
 def test_translate_text_without_model_returns_input():
     svc = TranslationService()
+    svc.unload()
+    svc.translate_text = TranslationService.translate_text.__get__(svc, TranslationService)
     text = "Sample text"
     # When model/tokenizer not loaded, method returns original text
     assert svc.translate_text(text) == text
