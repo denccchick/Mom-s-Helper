@@ -35,7 +35,7 @@ def simple_translator():
     It maps common English greetings to Russian words so tests can assert
     that a translation has occurred without loading a real model.
     """
-    def _translate(text: str, src_lang: str = None, tgt_lang: str = None):
+    def _translate(text: str, src_lang: str = None, tgt_lang: str = None, num_beams: int = 2):
         low = text.lower()
         if "hello" in low and "world" in low:
             return "Привет мир"
