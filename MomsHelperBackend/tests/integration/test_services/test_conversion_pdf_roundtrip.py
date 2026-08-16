@@ -47,7 +47,7 @@ async def test_docx_to_pdf_and_back(tmp_test_dir, uploadfile_factory):
         uf = uploadfile_factory(input_docx.name, f.read())
 
     try:
-        pdf_path = await svc.docx_to_pdf(uf)
+        pdf_path = svc.docx_to_pdf(uf)
     except HTTPException as e:
         pytest.skip(f"docx->pdf conversion not available in environment: {e.detail}")
 
@@ -58,7 +58,7 @@ async def test_docx_to_pdf_and_back(tmp_test_dir, uploadfile_factory):
         pdf_uf = uploadfile_factory(pdf_path.name, f.read())
 
     try:
-        out_docx = await svc.pdf_to_docx(pdf_uf)
+        out_docx, _ = svc.pdf_to_docx(pdf_uf)
     except HTTPException as e:
         pytest.skip(f"pdf->docx conversion failed: {e.detail}")
 
