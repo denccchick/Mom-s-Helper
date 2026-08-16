@@ -16,3 +16,5 @@ PyMuPDF
 easyocr
 Pillow
 numpy
+pytest-asyncio
+pytest-mock
