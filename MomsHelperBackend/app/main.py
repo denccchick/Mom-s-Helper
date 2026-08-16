@@ -22,10 +22,20 @@ async def lifespan(app: FastAPI):
         logger.error(f"OCR load failed: {e}")
         traceback.print_exc()
 
+    try:
+        logger.info("Loading translation model (NLLB)...")
+        model_path = Path(__file__).parent.parent / "translation_models" / "nllb_ct2_int8_mom"
+        await asyncio.to_thread(translation_service.load_model, model_path)
+        logger.info("Translation model ready")
+    except Exception as e:
+        logger.error(f"Translation model load failed: {e}")
+        traceback.print_exc()
+
     yield
 
     logger.info("Shutting down...")
     conversion_service.unload()
+    translation_service.unload()
 
 def create_app() -> FastAPI:
     application = FastAPI(
