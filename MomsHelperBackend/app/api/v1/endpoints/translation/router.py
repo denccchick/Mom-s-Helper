@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, UploadFile, File, HTTPException
+﻿from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 from pathlib import Path
 import uuid
@@ -14,37 +14,36 @@ TRANSLATED_DIR.mkdir(exist_ok=True)
 
 
 @router.post("/translate-docx")
-async def translate_docx(file: UploadFile = File(...)):
+async def translate_docx(
+    file: UploadFile = File(...),
+    num_beams: int = Form(2),
+):
     if not file.filename.endswith('.docx'):
         raise HTTPException(400, "Only DOCX files are supported")
 
-    # Сохраняем загруженный файл во временную папку
+    if num_beams not in (1, 2, 4):
+        raise HTTPException(400, "num_beams must be one of: 1, 2, 4")
+
     import tempfile
     with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp:
         tmp.write(await file.read())
         input_path = Path(tmp.name)
 
     try:
-        # Генерируем уникальное имя для сохранения
         original_name = Path(file.filename).stem
         unique_id = uuid.uuid4().hex[:8]
         output_filename = f"{original_name}_{unique_id}_translated.docx"
-
-        # Сохраняем в папку translated_texts
         output_path = TRANSLATED_DIR / output_filename
 
-        logger.info(f"Saving translated document to: {output_path}")
+        logger.info(f"Saving translated document to: {output_path} with num_beams={num_beams}")
 
-        # Выполняем перевод
-        result = translation_service.translate_docx(input_path, output_path)
+        result = translation_service.translate_docx(input_path, output_path, num_beams=num_beams)
 
-        # Проверяем, что файл создался
         if not result.exists():
             raise HTTPException(500, "File was not saved successfully")
 
         logger.info(f"File saved successfully. Size: {result.stat().st_size} bytes")
 
-        # Возвращаем файл пользователю
         return FileResponse(
             path=result,
             filename=output_filename,
@@ -55,7 +54,6 @@ async def translate_docx(file: UploadFile = File(...)):
         logger.error(f"Translation error: {e}")
         raise HTTPException(500, f"Translation failed: {str(e)}")
     finally:
-        # Удаляем временный файл
         if input_path.exists():
             input_path.unlink()
 

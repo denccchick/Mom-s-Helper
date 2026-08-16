@@ -98,7 +98,7 @@ class TranslationService:
 
         return chunks
 
-    def _translate_chunk(self, chunk: str, src_lang: str, tgt_lang: str) -> str:
+    def _translate_chunk(self, chunk: str, src_lang: str, tgt_lang: str, num_beams: int = 2) -> str:
         """Перевод отдельного чанка"""
         if not chunk.strip():
             return ""
@@ -111,11 +111,11 @@ class TranslationService:
             if not tokens:
                 return ""
 
-            # max_decoding_length=1024 - РЕШАЕТ ПРОБЛЕМУ ОБРЕЗКИ ТЕКСТА
             results = self._translator.translate_batch(
                 [tokens],
                 target_prefix=[[tgt_lang]],
-                max_decoding_length=1024
+                max_decoding_length=1024,
+                beam_size=num_beams
             )
 
             if not results or not results[0].hypotheses:
@@ -135,7 +135,7 @@ class TranslationService:
             logger.error(f"Chunk translation error: {e}")
             return chunk
 
-    def translate_text(self, text: str, src_lang: str = "eng_Latn", tgt_lang: str = "rus_Cyrl") -> str:
+    def translate_text(self, text: str, src_lang: str = "eng_Latn", tgt_lang: str = "rus_Cyrl", num_beams: int = 2) -> str:
         """Главный метод перевода текста с сохранением структуры"""
         if not text or not text.strip():
             return text
@@ -157,7 +157,7 @@ class TranslationService:
 
             translated_chunks = []
             for chunk in chunks:
-                translated = self._translate_chunk(chunk, src_lang, tgt_lang)
+                translated = self._translate_chunk(chunk, src_lang, tgt_lang, num_beams=num_beams)
                 translated_chunks.append(translated)
 
             translated_lines.append(" ".join(translated_chunks))
@@ -200,33 +200,36 @@ class TranslationService:
             new_run.font.name = original_font.name
             new_run.font.size = original_font.size
 
-    def translate_paragraph(self, paragraph: Paragraph) -> None:
+    def translate_paragraph(self, paragraph: Paragraph, num_beams: int = 2) -> None:
         original_text = paragraph.text
         if not original_text or not original_text.strip():
             return
 
-        translated_text = self.translate_text(original_text)
+        translated_text = self.translate_text(original_text, num_beams=num_beams)
         self._preserve_runs_formatting(paragraph, translated_text)
 
-    def translate_table(self, table: Table) -> None:
+    def translate_table(self, table: Table, num_beams: int = 2) -> None:
         for row in table.rows:
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
-                    self.translate_paragraph(paragraph)
+                    self.translate_paragraph(paragraph, num_beams=num_beams)
                 for nested_table in cell.tables:
-                    self.translate_table(nested_table)
+                    self.translate_table(nested_table, num_beams=num_beams)
 
-    def translate_docx(self, input_path: Path, output_path: Path) -> Path:
+    def translate_docx(self, input_path: Path, output_path: Path, num_beams: int = 2) -> Path:
+        if num_beams not in (1, 2, 4):
+            num_beams = 2
+
         doc = Document(input_path)
 
         for paragraph in doc.paragraphs:
-            self.translate_paragraph(paragraph)
+            self.translate_paragraph(paragraph, num_beams=num_beams)
 
         for table in doc.tables:
-            self.translate_table(table)
+            self.translate_table(table, num_beams=num_beams)
 
         doc.save(output_path)
-        logger.info(f"Translated document saved to {output_path}")
+        logger.info(f"Translated document saved to {output_path} with num_beams={num_beams}")
         return output_path
 
     def unload(self):
