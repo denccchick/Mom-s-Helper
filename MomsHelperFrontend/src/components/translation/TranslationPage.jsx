@@ -3,12 +3,12 @@ import {
   Upload,
   FileText,
   Download,
-  RefreshCw,
   X,
   Loader2,
-  CheckCircle,
-  AlertCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Zap,
+  Gauge,
+  Target
 } from 'lucide-react';
 import '../../styles/components/translation/TranslationPage.css';
 
@@ -16,6 +16,7 @@ const TranslationPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
+  const [beamMode, setBeamMode] = useState(2);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -47,6 +48,7 @@ const TranslationPage = () => {
     setIsLoading(true);
     const formData = new FormData();
     formData.append('file', selectedFile);
+    formData.append('num_beams', String(beamMode));
     const backendUrl = window.location.origin.replace(':3000', ':8000');
     try {
       const res = await fetch(`${backendUrl}/api/v1/translation/translate-docx`, {
@@ -92,6 +94,13 @@ const TranslationPage = () => {
     document.getElementById('fileInput').value = '';
   };
 
+  // Конфигурация режимов перевода с иконками
+  const translationModes = [
+    { value: 1, label: 'Быстро', icon: Zap },
+    { value: 2, label: 'Баланс', icon: Gauge },
+    { value: 4, label: 'Точно', icon: Target },
+  ];
+
   return (
     <div className="translation-container">
       <div className="translation-card">
@@ -99,6 +108,23 @@ const TranslationPage = () => {
           <FileSpreadsheet size={32} className="header-icon" />
           <h1>Перевод документов</h1>
           <p>Загрузите DOCX и получите переведённый файл</p>
+        </div>
+
+        {/* Режимы перевода - точно как в ConversionPage */}
+        <div className="translation-mode-badges">
+          {translationModes.map((mode) => {
+            const Icon = mode.icon;
+            return (
+              <button
+                key={mode.value}
+                className={`translation-mode-badge ${beamMode === mode.value ? 'active' : ''}`}
+                onClick={() => setBeamMode(mode.value)}
+              >
+                <Icon size={18} />
+                <span>{mode.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div
@@ -155,6 +181,7 @@ const TranslationPage = () => {
           )}
           {downloadUrl && (
             <button onClick={handleDownload} className="download-btn">
+              <Download size={18} />
               <span>Скачать DOCX</span>
             </button>
           )}
