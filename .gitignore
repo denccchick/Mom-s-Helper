@@ -89,6 +89,7 @@ __pycache__/
 
 *my_doc.md
 *.jsonl
+*.tmp
 
 # React / Node.js
 node_modules/
