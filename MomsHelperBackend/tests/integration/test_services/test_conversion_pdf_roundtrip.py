@@ -47,7 +47,7 @@ async def test_docx_to_pdf_and_back(tmp_test_dir, uploadfile_factory):
         uf = uploadfile_factory(input_docx.name, f.read())
 
     try:
-        pdf_path = svc.docx_to_pdf(uf)
+        pdf_path, _ = svc.docx_to_pdf(uf)
     except HTTPException as e:
         pytest.skip(f"docx->pdf conversion not available in environment: {e.detail}")
 
