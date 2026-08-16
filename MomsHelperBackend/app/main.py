@@ -1,4 +1,3 @@
-# app/main.py - добавить принудительную загрузку модели при старте
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from pathlib import Path

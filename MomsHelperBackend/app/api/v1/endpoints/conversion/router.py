@@ -5,19 +5,17 @@ import uuid
 import json
 from pathlib import Path
 from app.services.conversion_service import conversion_service
+from datetime import datetime
 
 router = APIRouter(tags=["conversion"])
-
 
 @router.post("/pdf-to-docx")
 def convert_pdf_to_docx(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = None
 ):
-    docx_path, preview_images = conversion_service.pdf_to_docx(file)
 
-    if background_tasks:
-        background_tasks.add_task(conversion_service.cleanup, docx_path)
+    docx_path, preview_images = conversion_service.pdf_to_docx(file)
 
     return JSONResponse({
         "success": True,
@@ -31,15 +29,16 @@ def convert_docx_to_pdf(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = None
 ):
-    pdf_path = conversion_service.docx_to_pdf(file)
-    if background_tasks:
-        background_tasks.add_task(conversion_service.cleanup, pdf_path)
-    return FileResponse(
-        path=pdf_path,
-        filename=pdf_path.name,
-        media_type="application/pdf"
-    )
 
+    pdf_path, preview_images = conversion_service.docx_to_pdf(file)
+
+    # Возвращаем JSON с информацией о файле и превью
+    return JSONResponse({
+        "success": True,
+        "file_path": str(pdf_path),
+        "filename": pdf_path.name,
+        "preview": preview_images
+    })
 
 @router.post("/pdf-to-docx-ocr")
 async def convert_pdf_to_docx_ocr(
@@ -51,23 +50,41 @@ async def convert_pdf_to_docx_ocr(
         request_id = str(uuid.uuid4())
     docx_path = await conversion_service.pdf2docx_ocr(file, request_id)
     if background_tasks:
-        background_tasks.add_task(conversion_service.cleanup, docx_path)
         background_tasks.add_task(conversion_service.remove_progress_callback, request_id)
-    return FileResponse(
-        path=docx_path,
-        filename=docx_path.name,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
 
-@router.get("/download/{file_path:path}")
-def download_file(file_path: str):
-    path = Path(file_path)
-    if not path.exists():
-        raise HTTPException(404, "Файл не найден")
+    # Возвращаем JSON с информацией о файле
+    return JSONResponse({
+        "success": True,
+        "file_path": str(docx_path),
+        "filename": docx_path.name,
+        "preview": []
+    })
+
+@router.get("/download/{filename}")
+def download_file(filename: str):
+    safe_name = Path(filename).name
+    path = (conversion_service.temp_dir / safe_name).resolve()
+
+    if not path.exists() or not path.is_file():
+        raise HTTPException(404, f"Файл не найден: {filename}")
+
+    if conversion_service.temp_dir.resolve() not in path.parents and path.resolve() != conversion_service.temp_dir.resolve():
+        raise HTTPException(403, "Недопустимый путь к файлу")
+
+    extension = path.suffix.lower()
+    if extension == '.pdf':
+        media_type = "application/pdf"
+    elif extension == '.docx':
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    else:
+        media_type = "application/octet-stream"
+
+    print(f"Serving file: {path} (size: {path.stat().st_size} bytes)")
+
     return FileResponse(
         path=path,
         filename=path.name,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        media_type=media_type
     )
 
 @router.post("/cancel/{request_id}")
@@ -108,3 +125,20 @@ async def get_progress(request_id: str):
             "Connection": "keep-alive"
         }
     )
+
+@router.get("/files")
+def list_files():
+    """Список всех временных файлов (для отладки)"""
+    files = []
+    for file_path in conversion_service.temp_dir.glob("*"):
+        if file_path.is_file():
+            files.append({
+                "name": file_path.name,
+                "size": file_path.stat().st_size,
+                "modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat()
+            })
+    return {
+        "count": len(files),
+        "files": files,
+        "temp_dir": str(conversion_service.temp_dir)
+    }
