@@ -315,8 +315,8 @@ class TranslationService:
             if request_id:
                 preview_data = {
                     'paragraph_index': idx,
-                    'original': original_text[:300] if original_text else "",
-                    'translated': paragraph.text[:300] if paragraph.text else "",
+                    'original': original_text if original_text else "",
+                    'translated': paragraph.text if paragraph.text else "",
                 }
                 await self.update_progress(
                     request_id,
