@@ -438,7 +438,7 @@ class ConversionService:
         if file_path and file_path.exists():
             try:
                 file_path.unlink()
-                print(f"🗑️ Deleted: {file_path}")
+                print(f"Deleted: {file_path}")
             except Exception as e:
                 print(f"Error deleting {file_path}: {e}")
 
