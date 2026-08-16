@@ -6,6 +6,24 @@ import pytest
 
 from app.services.conversion_service import ConversionService
 from fastapi import HTTPException
+from PIL import Image, ImageDraw, ImageFont
+
+
+def _make_image_pdf(path: Path, text: str = "Hello world"):
+    img = Image.new("RGB", (400, 200), color=(255, 255, 255))
+    draw = ImageDraw.Draw(img)
+    try:
+        font = ImageFont.truetype("arial.ttf", 24)
+    except Exception:
+        font = None
+    draw.text((20, 60), text, fill=(0, 0, 0), font=font)
+    img.save(path, "PDF")
+
+
+class DummyReader:
+    def readtext(self, img_array, detail=1):
+        bbox = [(10, 10), (300, 10), (300, 80), (10, 80)]
+        return [(bbox, "Hello world", 0.98)]
 
 
 def make_uploadfile(filename: str, content: bytes):
@@ -42,3 +60,19 @@ def test_cleanup_removes_file(tmp_path):
     assert p.exists()
     svc.cleanup(p)
     assert not p.exists()
+
+
+def test__process_ocr_pdf_creates_output(tmp_path):
+    svc = ConversionService(temp_dir=str(tmp_path))
+
+    input_pdf = tmp_path / "img.pdf"
+    ocr_output_pdf = tmp_path / "ocr_out.pdf"
+
+    _make_image_pdf(input_pdf, text="Hello world")
+
+    svc.reader = DummyReader()
+
+    svc._process_ocr_pdf(str(input_pdf), str(ocr_output_pdf))
+
+    assert ocr_output_pdf.exists()
+    assert ocr_output_pdf.stat().st_size > 0
