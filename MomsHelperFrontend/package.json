@@ -1,12 +1,16 @@
 {
-  "name": "controlcharts-frontend",
-  "version": "0.0.0",
+  "name": "MomsHelper-frontend",
+  "version": "1.1.0",
   "type": "module",
   "private": true,
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",
-    "preview": "vite preview --port 3000"
+    "preview": "vite preview --port 3000",
+    "electron:dev": "cross-env NODE_ENV=development electron .",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win"
   },
   "dependencies": {
     "lucide-react": "^1.22.0",
@@ -16,6 +20,35 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.0",
+    "cross-env": "^7.0.3",
+    "electron": "^43.4.0",
+    "electron-builder": "^26.15.3",
     "vite": "^5.0.0"
+  },
+  "build": {
+    "appId": "com.momshelper.app",
+    "productName": "Mom's Helper",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../MomsHelperBackend/",
+        "to": "backend/",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "electron/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
