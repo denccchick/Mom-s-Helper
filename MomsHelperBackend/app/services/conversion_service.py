@@ -10,6 +10,7 @@ from typing import Optional, Callable, Set
 from datetime import datetime
 import uuid
 import subprocess
+import tempfile
 
 from pdf2docx import Converter as PDF2DocxConverter
 from docx2pdf import convert as docx2pdf_convert
@@ -123,43 +124,6 @@ class ConversionService:
             traceback.print_exc()
             return []
 
-    def pdf_to_docx(self, file: UploadFile) -> tuple[Path, list]:
-        """Синхронная конвертация PDF→DOCX с превью"""
-        if not file.filename.lower().endswith('.pdf'):
-            raise HTTPException(400, "Файл должен быть PDF")
-
-        unique_id = str(uuid.uuid4())[:8]
-        pdf_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}_input.pdf"
-
-        print(f"Saving PDF to: {pdf_path}")
-        try:
-            with open(pdf_path, "wb") as f:
-                shutil.copyfileobj(file.file, f)
-        except Exception as e:
-            self._cleanup_files(pdf_path)
-            raise HTTPException(500, f"Не удалось сохранить PDF: {str(e)}")
-
-        docx_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.docx"
-        print(f"Creating DOCX at: {docx_path}")
-
-        try:
-            cv = PDF2DocxConverter(str(pdf_path))
-            cv.convert(str(docx_path), start=0, end=None)
-            cv.close()
-        except Exception as e:
-            self._cleanup_files(pdf_path, docx_path)
-            raise HTTPException(500, f"Ошибка конвертации PDF → DOCX: {str(e)}")
-        finally:
-            self._cleanup_files(pdf_path)
-
-        if not docx_path.exists():
-            raise HTTPException(500, "DOCX файл не был создан")
-
-        # Генерируем превью из DOCX
-        preview_images = self._generate_preview_from_docx(str(docx_path), 3)
-
-        return docx_path, preview_images
-
     def _generate_preview_from_docx(self, docx_path: str, max_pages: int = 3) -> list:
         """Генерирует превью из DOCX"""
         try:
@@ -188,6 +152,40 @@ class ConversionService:
             traceback.print_exc()
             return []
 
+    def pdf_to_docx(self, file: UploadFile) -> tuple[Path, list]:
+        """Синхронная конвертация PDF→DOCX с превью"""
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(400, "Файл должен быть PDF")
+
+        unique_id = str(uuid.uuid4())[:8]
+        pdf_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.pdf"
+        docx_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.docx"
+
+        print(f"Saving PDF to: {pdf_path}")
+        try:
+            with open(pdf_path, "wb") as f:
+                shutil.copyfileobj(file.file, f)
+        except Exception as e:
+            self._cleanup_files(pdf_path)
+            raise HTTPException(500, f"Не удалось сохранить PDF: {str(e)}")
+
+        print(f"Creating DOCX at: {docx_path}")
+        try:
+            cv = PDF2DocxConverter(str(pdf_path))
+            cv.convert(str(docx_path), start=0, end=None)
+            cv.close()
+        except Exception as e:
+            self._cleanup_files(pdf_path, docx_path)
+            raise HTTPException(500, f"Ошибка конвертации PDF → DOCX: {str(e)}")
+        finally:
+            self._cleanup_files(pdf_path)
+
+        if not docx_path.exists():
+            raise HTTPException(500, "DOCX файл не был создан")
+
+        preview_images = self._generate_preview_from_docx(str(docx_path), 3)
+        return docx_path, preview_images
+
     def docx_to_pdf(self, file: UploadFile) -> tuple[Path, list]:
         """Синхронная конвертация DOCX→PDF с превью"""
         if not file.filename.lower().endswith('.docx'):
@@ -195,8 +193,9 @@ class ConversionService:
 
         unique_id = str(uuid.uuid4())[:8]
         docx_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.docx"
-        print(f"Saving DOCX to: {docx_path}")
+        pdf_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.pdf"
 
+        print(f"Saving DOCX to: {docx_path}")
         try:
             with open(docx_path, "wb") as f:
                 shutil.copyfileobj(file.file, f)
@@ -204,37 +203,48 @@ class ConversionService:
             self._cleanup_files(docx_path)
             raise HTTPException(500, f"Не удалось сохранить DOCX: {str(e)}")
 
-        pdf_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.pdf"
+        # Создаём временную папку без пробелов для конвертации
+        safe_temp = Path(tempfile.mkdtemp(prefix="conv_"))
+        temp_docx = safe_temp / docx_path.name
+        shutil.copy2(docx_path, temp_docx)
+        print(f"Copied to safe location: {temp_docx}")
+
         print(f"Creating PDF at: {pdf_path}")
-
         try:
-            docx2pdf_convert(str(docx_path), str(self.temp_dir))
+            docx2pdf_convert(str(temp_docx), str(safe_temp))
 
-            possible_pdf = self.temp_dir / f"{Path(file.filename).stem}.pdf"
-            if possible_pdf.exists() and possible_pdf != pdf_path:
-                shutil.move(str(possible_pdf), str(pdf_path))
-
-            if not pdf_path.exists():
-                pdf_files = list(self.temp_dir.glob("*.pdf"))
+            expected_pdf = safe_temp / f"{Path(file.filename).stem}.pdf"
+            if expected_pdf.exists():
+                shutil.move(str(expected_pdf), str(pdf_path))
+            else:
+                pdf_files = list(safe_temp.glob("*.pdf"))
                 if pdf_files:
-                    shutil.move(str(pdf_files[0]), str(pdf_path))
+                    latest_pdf = max(pdf_files, key=lambda p: p.stat().st_mtime)
+                    shutil.move(str(latest_pdf), str(pdf_path))
+                else:
+                    raise Exception("PDF не создан")
 
             if not pdf_path.exists():
                 raise Exception("PDF не создан")
 
             print(f"PDF created successfully: {pdf_path}")
         except Exception as e:
+            print(f"Error during conversion: {e}")
+            import traceback
+            traceback.print_exc()
             self._cleanup_files(docx_path, pdf_path)
             raise HTTPException(500, f"Ошибка конвертации DOCX → PDF: {str(e)}")
         finally:
+            try:
+                shutil.rmtree(safe_temp, ignore_errors=True)
+            except:
+                pass
             self._cleanup_files(docx_path)
 
         if not pdf_path.exists():
             raise HTTPException(500, "PDF файл не был создан")
 
-        # Генерируем превью из PDF
         preview_images = self._generate_pdf_preview(str(pdf_path), 3)
-
         return pdf_path, preview_images
 
     async def pdf2docx_ocr(self, file: UploadFile, request_id: str = None) -> Path:
