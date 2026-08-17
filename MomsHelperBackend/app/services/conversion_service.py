@@ -8,7 +8,6 @@ from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from typing import Optional, Callable, Set
 from datetime import datetime
-import uuid
 import subprocess
 
 from pdf2docx import Converter as PDF2DocxConverter
@@ -128,8 +127,7 @@ class ConversionService:
         if not file.filename.lower().endswith('.pdf'):
             raise HTTPException(400, "Файл должен быть PDF")
 
-        unique_id = str(uuid.uuid4())[:8]
-        pdf_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}_input.pdf"
+        pdf_path = self.temp_dir / f"{Path(file.filename).stem}_input.pdf"
 
         print(f"Saving PDF to: {pdf_path}")
         try:
@@ -139,7 +137,7 @@ class ConversionService:
             self._cleanup_files(pdf_path)
             raise HTTPException(500, f"Не удалось сохранить PDF: {str(e)}")
 
-        docx_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.docx"
+        docx_path = self.temp_dir / f"{Path(file.filename).stem}.docx"
         print(f"Creating DOCX at: {docx_path}")
 
         try:
@@ -163,8 +161,7 @@ class ConversionService:
     def _generate_preview_from_docx(self, docx_path: str, max_pages: int = 3) -> list:
         """Генерирует превью из DOCX"""
         try:
-            unique_id = str(uuid.uuid4())[:8]
-            pdf_path = self.temp_dir / f"preview_{unique_id}.pdf"
+            pdf_path = self.temp_dir / f"{Path(docx_path).stem}_preview.pdf"
 
             print(f"Generating preview PDF: {pdf_path}")
 
@@ -193,8 +190,7 @@ class ConversionService:
         if not file.filename.lower().endswith('.docx'):
             raise HTTPException(400, "Файл должен быть DOCX")
 
-        unique_id = str(uuid.uuid4())[:8]
-        docx_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.docx"
+        docx_path = self.temp_dir / f"{Path(file.filename).stem}.docx"
         print(f"Saving DOCX to: {docx_path}")
 
         try:
@@ -204,7 +200,7 @@ class ConversionService:
             self._cleanup_files(docx_path)
             raise HTTPException(500, f"Не удалось сохранить DOCX: {str(e)}")
 
-        pdf_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}.pdf"
+        pdf_path = self.temp_dir / f"{Path(file.filename).stem}.pdf"
         print(f"Creating PDF at: {pdf_path}")
 
         try:
@@ -251,10 +247,9 @@ class ConversionService:
         if request_id:
             await self.update_progress(request_id, 5, "Проверка файла...")
 
-        unique_id = str(uuid.uuid4())[:8]
-        input_pdf_path = self.temp_dir / f"orig_{unique_id}_{file.filename}.tmp"
-        ocr_pdf_path = self.temp_dir / f"ocr_{unique_id}_{file.filename}.tmp"
-        docx_path = self.temp_dir / f"{Path(file.filename).stem}_{unique_id}_ocr.docx"
+        input_pdf_path = self.temp_dir / f"orig_{file.filename}.tmp"
+        ocr_pdf_path = self.temp_dir / f"ocr_{file.filename}.tmp"
+        docx_path = self.temp_dir / f"{Path(file.filename).stem}_ocr.docx"
 
         print(f"Processing OCR for: {file.filename}")
 
