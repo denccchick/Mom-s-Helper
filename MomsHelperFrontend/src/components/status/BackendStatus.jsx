@@ -7,7 +7,7 @@ export const BackendStatus = ({ children }) => {
     useEffect(() => {
         const checkBackend = async () => {
             try {
-                const backendUrl = window.location.origin.replace(':3000', ':8000');
+                const backendUrl = 'http://127.0.0.1:8000';
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
 

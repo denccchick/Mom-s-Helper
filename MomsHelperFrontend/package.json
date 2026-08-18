@@ -1,6 +1,6 @@
 {
-  "name": "MomsHelper-frontend",
-  "version": "1.1.0",
+  "name": "moms-helper-frontend",
+  "version": "1.2.0",
   "type": "module",
   "private": true,
   "main": "electron/main.cjs",
@@ -27,7 +27,7 @@
   },
   "build": {
     "appId": "com.momshelper.app",
-    "productName": "Mom's Helper",
+    "productName": "Mom-s-Helper",
     "directories": {
       "output": "release"
     },
@@ -39,9 +39,21 @@
       {
         "from": "../MomsHelperBackend/",
         "to": "backend/",
-        "filter": ["**/*"]
+        "filter": [
+          "app/**/*",
+          "main.py",
+          "requirements.txt",
+          "translation_models/**/*",
+          "venv/**/*",
+          "!**/*.pyc",
+          "!**/__pycache__/**",
+          "!**/*.ipynb",
+          "!**/*.bat",
+          "!**/*.sh"
+        ]
       }
     ],
+    "asar": false,
     "win": {
       "target": "nsis",
       "icon": "electron/icon.ico"
