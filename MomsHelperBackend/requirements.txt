@@ -1,11 +1,7 @@
 fastapi
 uvicorn
-pydantic
 python-multipart
 python-dotenv
-pyjwt
-bcrypt
-psutil
 pytest
 ctranslate2
 transformers
