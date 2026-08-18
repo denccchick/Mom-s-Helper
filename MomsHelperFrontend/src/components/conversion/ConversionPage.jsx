@@ -102,7 +102,7 @@ const ConversionPage = () => {
     setProgressStatus('Отмена операции...');
 
     try {
-      const backendUrl = window.location.origin.replace(':3000', ':8000');
+      const backendUrl = 'http://127.0.0.1:8000';
       await fetch(`${backendUrl}/api/v1/conversion/cancel/${requestIdRef.current}`, {
         method: 'POST'
       });
@@ -221,7 +221,7 @@ const ConversionPage = () => {
     setIsDownloadReady(false);
     setUploadProgress(0);
 
-    const backendUrl = window.location.origin.replace(':3000', ':8000');
+    const backendUrl = 'http://127.0.0.1:8000';
     const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     requestIdRef.current = requestId;
 
@@ -366,7 +366,7 @@ const ConversionPage = () => {
 
   const fetchDownloadUrl = async () => {
     try {
-      const backendUrl = window.location.origin.replace(':3000', ':8000');
+      const backendUrl = 'http://127.0.0.1:8000';
       const response = await fetch(`${backendUrl}/api/v1/conversion/files`);
       const data = await response.json();
 

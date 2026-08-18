@@ -97,7 +97,7 @@ const TranslationPage = () => {
 
   const handleDownload = () => {
     if (downloadUrl) {
-      const backendUrl = window.location.origin.replace(':3000', ':8000');
+      const backendUrl = 'http://127.0.0.1:8000';
       window.open(`${backendUrl}${downloadUrl}`, '_blank');
     }
   };
@@ -146,7 +146,7 @@ const TranslationPage = () => {
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('num_beams', String(beamMode));
-    const backendUrl = window.location.origin.replace(':3000', ':8000');
+    const backendUrl = 'http://127.0.0.1:8000';
 
     abortControllerRef.current = new AbortController();
 
