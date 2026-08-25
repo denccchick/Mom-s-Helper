@@ -36,7 +36,7 @@ export const BackendStatus = ({ children }) => {
         return (
             <div className="backend-status-loading">
                 <div className="spinner"></div>
-                <p>Проверка соединения с сервером</p>
+                <p>Подключение к серверу...</p>
             </div>
         );
     }
@@ -45,8 +45,8 @@ export const BackendStatus = ({ children }) => {
         return (
             <div className="backend-status-error">
                 <div className="error-card">
-                    <h1>Сервер недоступен</h1>
-                    <p>Проверьте состояние бэкенд-сервера</p>
+                    <h1>Модели загружаются, пожалуйста подождите...</h1>
+                    <h1>Для обновления нажимайте ctrl+R</h1>
                 </div>
             </div>
         );
