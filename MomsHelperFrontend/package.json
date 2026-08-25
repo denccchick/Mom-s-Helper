@@ -27,7 +27,8 @@
   },
   "build": {
     "appId": "com.momshelper.app",
-    "productName": "Mom-s-Helper",
+    "productName": "Mom's Helper",
+    "asar": false,
     "directories": {
       "output": "release"
     },
@@ -37,23 +38,20 @@
     ],
     "extraResources": [
       {
-        "from": "../MomsHelperBackend/",
-        "to": "backend/",
-        "filter": [
-          "app/**/*",
-          "main.py",
-          "requirements.txt",
-          "translation_models/**/*",
-          "venv/**/*",
-          "!**/*.pyc",
-          "!**/__pycache__/**",
-          "!**/*.ipynb",
-          "!**/*.bat",
-          "!**/*.sh"
-        ]
+        "from": "../MomsHelperBackend/dist/backend.exe",
+        "to": "backend/backend.exe"
+      },
+      {
+        "from": "../MomsHelperBackend/translation_models/",
+        "to": "backend/translation_models/",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../MomsHelperBackend/easyocr_models/",
+        "to": "backend/easyocr_models/",
+        "filter": ["**/*"]
       }
     ],
-    "asar": false,
     "win": {
       "target": "nsis",
       "icon": "electron/icon.ico"

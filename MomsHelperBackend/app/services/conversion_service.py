@@ -52,7 +52,21 @@ class ConversionService:
     def load_model(self):
         if self.reader is None:
             print("Loading EasyOCR model...")
-            self.reader = easyocr.Reader(['ru', 'en'], gpu=False)
+            import sys
+
+            if getattr(sys, 'frozen', False):
+                base_dir = Path(sys.executable).parent
+            else:
+                base_dir = Path(__file__).resolve().parent.parent.parent
+
+            easyocr_path = base_dir / "easyocr_models"
+
+            self.reader = easyocr.Reader(
+                ['ru', 'en'],
+                gpu=False,
+                model_storage_directory=str(easyocr_path),
+                download_enabled=False
+            )
             print("EasyOCR model loaded successfully.")
 
     def unload(self):

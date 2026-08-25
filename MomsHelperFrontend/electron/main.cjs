@@ -106,71 +106,6 @@ function createMainWindow() {
     }
 }
 
-function findBackendPath() {
-    const resourcesPath = process.resourcesPath;
-
-    const possiblePaths = [
-        resourcesPath,
-        path.join(resourcesPath, 'backend'),
-        path.join(path.dirname(app.getPath('exe')), 'resources', 'backend'),
-    ];
-
-    for (const p of possiblePaths) {
-        const mainPy = path.join(p, 'app', 'main.py');
-        if (fs.existsSync(mainPy)) {
-            return p;
-        }
-    }
-
-    return null;
-}
-
-function setupVenv(backendPath) {
-    const venvPath = path.join(backendPath, 'venv');
-    const pythonExe = path.join(venvPath, 'Scripts', 'python.exe');
-
-    if (fs.existsSync(pythonExe)) {
-        console.log('Python environment found: ' + pythonExe);
-        return pythonExe;
-    }
-
-    console.log('Python environment not found. Creating venv...');
-
-    const result = require('child_process').spawnSync('python', ['-m', 'venv', 'venv'], {
-        cwd: backendPath,
-        shell: true,
-        stdio: 'pipe'
-    });
-
-    if (result.status !== 0) {
-        console.log('Failed to create virtual environment');
-        return null;
-    }
-
-    console.log('Virtual environment created');
-
-    const pipExe = path.join(venvPath, 'Scripts', 'pip.exe');
-    const requirementsPath = path.join(backendPath, 'requirements.txt');
-
-    if (fs.existsSync(requirementsPath)) {
-        console.log('Installing dependencies...');
-        const pipResult = require('child_process').spawnSync(pipExe, ['install', '--no-cache-dir', '-r', 'requirements.txt'], {
-            cwd: backendPath,
-            shell: true,
-            stdio: 'pipe'
-        });
-
-        if (pipResult.status !== 0) {
-            console.log('Failed to install dependencies');
-            return null;
-        }
-
-        console.log('All dependencies installed');
-    }
-
-    return pythonExe;
-}
-
 function startBackend() {
     const isDev = process.env.NODE_ENV === 'development';
 
@@ -200,41 +135,34 @@ function startBackend() {
         return;
     }
 
+    // ========== ПРОДАКШЕН ==========
+
     if (!isPortAvailable(8000)) {
         console.log('Port 8000 is busy, trying to free it...');
         killProcessOnPort(8000);
     }
 
-    const backendPath = findBackendPath();
+    const resourcesPath = process.resourcesPath;
+    const exePath = path.join(resourcesPath, 'backend', 'backend.exe');
 
-    if (!backendPath) {
-        dialog.showErrorBox('Error', 'Application files not found. Please reinstall.');
-        app.quit();
-        return;
-    }
-
-    console.log('Backend path:', backendPath);
-
-    const pythonExe = setupVenv(backendPath);
-
-    if (!pythonExe) {
+    if (!fs.existsSync(exePath)) {
+        console.error('Backend executable not found at:', exePath);
         dialog.showErrorBox(
-            'Setup Failed',
-            'Failed to setup Python environment.\n\nMake sure Python 3.8+ is installed and added to PATH.\n\nDownload Python: https://python.org'
+            'Error',
+            'Backend executable not found.\n\n' +
+            'Expected: ' + exePath
         );
         app.quit();
         return;
     }
 
-    console.log('Starting uvicorn...');
+    console.log('Starting backend from:', exePath);
 
-    backendProcess = spawn(pythonExe, ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000'], {
-        cwd: backendPath,
-        shell: true,
+    backendProcess = spawn(exePath, [], {
+        detached: false,
         stdio: 'pipe',
         env: {
             ...process.env,
-            PYTHONPATH: backendPath,
             PYTHONUNBUFFERED: '1'
         }
     });
